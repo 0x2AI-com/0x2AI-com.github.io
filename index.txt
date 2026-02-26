@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>0x2AI Code — Multi-Agent Coding Engine</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="AI agents that collaborate, cross-check, and remember — with support for leading model providers and local models. Self-hosted, privacy-first.">
+  <meta name="theme-color" content="#05060a">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="0x2AI Code — Multi-Agent Coding Engine">
+  <meta property="og:description" content="AI agents that collaborate, cross-check, and remember. Self-hosted, privacy-first, built for serious engineering.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://0x2AI.com">
+  <meta property="og:image" content="https://0x2AI.com/hero-poster.jpg">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #05060a;
+      --surface: #0d0e14;
+      --surface-hover: #13141c;
+      --border: #1a1d25;
+      --text: #f5f5f7;
+      --text-dim: #9ca0b0;
+      --text-muted: #666;
+      --accent: #9aa0ff;
+      --accent-glow: rgba(154, 160, 255, 0.15);
+      --cyan: #00f2ff;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== SPLASH OVERLAY ===== */
+    .splash {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 9999;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 1.2s ease;
+    }
+
+    .splash.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .splash video {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      image-orientation: none;
+    }
+    .splash img, .splash video[poster] {
+      image-orientation: none;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.03em;
+    }
+
+    nav a {
+      color: var(--text-dim);
+      margin-left: 24px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    nav a:hover { color: #fff; }
+
+    /* ===== HERO ===== */
+    .hero {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 80px 24px 60px;
+    }
+
+    .hero-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.25rem;
+      opacity: 0.85;
+    }
+
+    h1 {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 20px;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #fff 40%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .sub {
+      font-size: 18px;
+      color: var(--text-dim);
+      max-width: 650px;
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+
+    .cta-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .cta {
+      padding: 14px 28px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: box-shadow 0.3s, transform 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .cta:hover {
+      box-shadow: 0 4px 24px var(--accent-glow);
+      transform: translateY(-1px);
+    }
+
+    .cta-note {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .cta-note strong {
+      color: var(--accent);
+    }
+
+    /* ===== SECTIONS ===== */
+    section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 64px 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    h2 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .section-tagline {
+      font-size: 14px;
+      color: var(--text-dim);
+      max-width: 650px;
+      margin-bottom: 24px;
+    }
+
+    ul { padding-left: 0; list-style: none; }
+
+    ul li {
+      margin-bottom: 10px;
+      color: var(--text-dim);
+      padding-left: 20px;
+      position: relative;
+      font-size: 15px;
+    }
+
+    ul li::before {
+      content: '\2713';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ===== PROVIDER GRID ===== */
+    .provider-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .provider-tag {
+      padding: 10px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text-dim);
+      text-align: center;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .provider-tag:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    /* ===== PRICING ===== */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .pricing-card {
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: border-color 0.2s;
+    }
+
+    .pricing-card:hover { border-color: rgba(154,160,255,0.3); }
+
+    .pricing-card.featured {
+      border-color: var(--accent);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .pricing-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .pricing-card .price {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .pricing-card p {
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    /* ===== BETA CTA ===== */
+    .beta-section {
+      text-align: center;
+      padding: 80px 24px;
+    }
+
+    .beta-section h2 {
+      margin-bottom: 12px;
+    }
+
+    .beta-sub {
+      color: var(--text-dim);
+      max-width: 500px;
+      margin: 0 auto 28px;
+      font-size: 15px;
+    }
+
+    .signup {
+      display: flex;
+      max-width: 400px;
+      margin: 0 auto 12px;
+      gap: 0;
+    }
+
+    .signup input {
+      flex: 1;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-right: none;
+      border-radius: 8px 0 0 8px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .signup input:focus { border-color: var(--accent); }
+
+    .signup button {
+      padding: 12px 20px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 0 8px 8px 0;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+
+    .signup-note {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .beta-email-link {
+      display: inline-block;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 20px;
+      transition: opacity 0.2s;
+    }
+
+    .beta-email-link:hover { opacity: 0.8; }
+
+    /* ===== FOOTER ===== */
+    footer {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .footer-email {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+      transition: opacity 0.2s;
+    }
+
+    .footer-email:hover { opacity: 0.8; }
+
+    .hex-meaning {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 12px;
+    }
+
+    .hex-meaning code {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-dim);
+    }
+
+    .copyright {
+      font-size: 12px;
+      color: #444;
+      margin-top: 8px;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 640px) {
+      h1 { font-size: 32px; }
+      .hero { padding: 60px 20px 40px; }
+      section { padding: 48px 20px; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .provider-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- ===== SPLASH VIDEO OVERLAY ===== -->
+<div class="splash" id="splash">
+  <video id="splashVideo" autoplay muted playsinline poster="hero-poster.jpg">
+    <source src="video/hero-loop.webm" type="video/webm">
+    <source src="video/hero-loop.mp4" type="video/mp4">
+  </video>
+</div>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="logo">0x2AI Code</div>
+  <nav>
+    <a href="#features">Features</a>
+    <a href="#providers">Providers</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#beta">Beta</a>
+  </nav>
+</header>
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="hero-label">Multi-Agent Coding Engine</div>
+  <h1>A Multi-Agent Coding Engine<br>for Real Developers</h1>
+  <p class="sub">
+    What happens when you put Claude, GPT, Gemini, Copilot and Codex in the same workspace and give them a bug list?
+  </p>
+  <p class="sub" style="margin-top: -16px;">
+    <a href="https://www.youtube.com/watch?v=En6WxuJ6e_0&t=308s" target="_blank" rel="noopener" style="color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(154,160,255,0.3);">Agents collaborate, debate, and verify each other &mdash; so you get working code.</a>
+  </p>
+  <div class="cta-row">
+    <a href="#beta" class="cta">Request Early Access</a>
+    <span class="cta-note"><strong>First 100</strong> &mdash; 1 year Pro free</span>
+  </div>
+</div>
+
+<!-- ===== MULTI-AGENT COLLABORATION ===== -->
+<section id="features">
+  <h2>Multi-Agent Collaboration</h2>
+  <p class="section-tagline">Multiple AI agents working the same codebase, debating solutions, and building together.</p>
+  <ul>
+    <li>Multiple agents work the same codebase simultaneously</li>
+    <li>Agents debate, cross-check, and verify each other's output</li>
+    <li>Real CLI agents with persistent sessions</li>
+    <li>Parallel workstreams for multi-tasking</li>
+    <li>Agent specialization — frontend, backend, research, review</li>
+  </ul>
+</section>
+
+<!-- ===== PERSISTENT MEMORY ===== -->
+<section>
+  <h2>Persistent Memory</h2>
+  <p class="section-tagline">Your agents remember architecture decisions, conventions, and context across sessions.</p>
+  <ul>
+    <li>Per-agent and shared memory namespaces</li>
+    <li>Architecture decisions and conventions preserved</li>
+    <li>Salience-based recall and auto-consolidation</li>
+    <li>Full-text search across all agent memories</li>
+    <li>Session snapshots survive restarts</li>
+  </ul>
+</section>
+
+<!-- ===== CONSENSUS & VALIDATION ===== -->
+<section>
+  <h2>Consensus &amp; Validation</h2>
+  <p class="section-tagline">Cross-model validation catches hallucinations before they hit your codebase.</p>
+  <ul>
+    <li>Cross-model validation for safer outputs</li>
+    <li>Deterministic math and logic checks</li>
+    <li>Search-grounded fact verification</li>
+    <li>Automatic correction of inconsistent answers</li>
+    <li>Trust badges on validated responses</li>
+  </ul>
+</section>
+
+<!-- ===== MODEL-AGNOSTIC ===== -->
+<section id="providers">
+  <h2>Model-Agnostic by Design</h2>
+  <p class="section-tagline">
+    Bring your own API keys. Choose the right model for each task. No vendor lock-in.
+    Use <strong style="color: var(--text);">OpenRouter</strong> for one-key access to 200+ models, or <strong style="color: var(--text);">Groq</strong> for blazing-fast inference.
+  </p>
+  <div class="provider-grid">
+    <div class="provider-tag">Anthropic</div>
+    <div class="provider-tag">OpenAI</div>
+    <div class="provider-tag">Google</div>
+    <div class="provider-tag">xAI / Grok</div>
+    <div class="provider-tag">Groq</div>
+    <div class="provider-tag">DeepSeek</div>
+    <div class="provider-tag">Mistral</div>
+    <div class="provider-tag">Cohere</div>
+    <div class="provider-tag">Perplexity</div>
+    <div class="provider-tag">OpenRouter</div>
+    <div class="provider-tag">Ollama (Local)</div>
+  </div>
+</section>
+
+<!-- ===== PRICING ===== -->
+<section id="pricing">
+  <h2>Early Access</h2>
+  <p class="section-tagline">Get in early. Shape the product. Get rewarded.</p>
+  <div class="pricing-grid">
+    <div class="pricing-card featured">
+      <h3>First 100</h3>
+      <div class="price">1 YEAR PRO FREE</div>
+      <p>Full multi-agent workspace, memory, consensus, all providers. Plus 50% off future tier upgrades. Must actively participate in beta.</p>
+    </div>
+    <div class="pricing-card">
+      <h3>Next 1,000</h3>
+      <div class="price">INTRO PRICING</div>
+      <p>Pro tier available at special roll-out price. Lock in early before general availability.</p>
+    </div>
+    <div class="pricing-card">
+      <h3>Free</h3>
+      <div class="price">$0 / forever</div>
+      <p>1 agent, basic chat, no memory, no consensus. Great for trying it out.</p>
+    </div>
+    <div class="pricing-card">
+      <h3>Enterprise</h3>
+      <div class="price">Contact us</div>
+      <p>On-prem deployment, SLAs, unlimited agents, custom integrations.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== BETA CTA ===== -->
+<section class="beta-section" id="beta">
+  <h2>Join the Private Beta</h2>
+  <p class="beta-sub">Be among the first developers to build with a real multi-agent coding team.</p>
+  <a href="mailto:beta@0x2AI.com" class="beta-email-link">&#x2709; beta@0x2AI.com</a>
+  <form class="signup" id="signupForm" onsubmit="handleSignup(event)">
+    <input type="email" placeholder="your@email.com" required id="emailInput" aria-label="Email for launch notification">
+    <button type="submit">Notify Me</button>
+  </form>
+  <p class="signup-note">Leave your email &mdash; we'll let you know when we launch.</p>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer id="contact">
+  <p style="margin-bottom: 8px;">
+    <a href="mailto:info@0x2AI.com" class="footer-email">&#x2709; info@0x2AI.com</a>
+  </p>
+  <p class="hex-meaning">
+    <code>0x2A</code> &mdash; The Answer to Life, the Universe, and Everything &mdash; <strong style="color: var(--accent);">now with agents</strong>
+  </p>
+  <p class="copyright">&copy; 2026 0x2AI. All rights reserved.</p>
+</footer>
+
+<script>
+  // ===== SPLASH VIDEO → FADE → REVEAL =====
+  (function() {
+    const splash = document.getElementById('splash');
+    const video = document.getElementById('splashVideo');
+
+    // Try playing with sound; fall back to muted
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        video.muted = true;
+        video.play();
+      });
+    }
+
+    // Fade out splash after 7 seconds (hold end frame ~3s longer)
+    setTimeout(() => {
+      splash.classList.add('fade-out');
+    }, 7000);
+
+    // Remove splash from DOM after fade completes
+    splash.addEventListener('transitionend', () => {
+      splash.style.display = 'none';
+    });
+
+    // Also allow click to skip splash
+    splash.addEventListener('click', () => {
+      splash.classList.add('fade-out');
+    });
+  })();
+
+  // ===== EMAIL SIGNUP =====
+  function handleSignup(e) {
+    e.preventDefault();
+    const email = document.getElementById('emailInput').value;
+    const btn = e.target.querySelector('button');
+    const orig = btn.textContent;
+
+    const signups = JSON.parse(localStorage.getItem('0x2ai-signups') || '[]');
+    if (!signups.includes(email)) {
+      signups.push(email);
+      localStorage.setItem('0x2ai-signups', JSON.stringify(signups));
+    }
+
+    btn.textContent = "You're In!";
+    btn.style.background = '#10b981';
+    document.getElementById('emailInput').value = '';
+
+    setTimeout(() => {
+      btn.textContent = orig;
+      btn.style.background = '';
+    }, 3000);
+  }
+</script>
+
+</body>
+</html>
