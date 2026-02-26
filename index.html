@@ -668,6 +668,10 @@
 </footer>
 
 <script>
+  // ===== ALWAYS START AT TOP =====
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  window.scrollTo(0, 0);
+
   // ===== GATE → VIDEO SPLASH → REVEAL =====
   (function() {
     const gate = document.getElementById('gate');
