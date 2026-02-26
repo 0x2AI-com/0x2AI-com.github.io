@@ -489,6 +489,26 @@
       section { padding: 48px 20px; }
       .pricing-grid { grid-template-columns: 1fr; }
       .provider-grid { grid-template-columns: repeat(2, 1fr); }
+      .gate-title { font-size: 18px; }
+      .gate-welcome { margin-bottom: 24px; }
+      .infinity-wrap { margin-bottom: 32px; }
+      .infinity-wrap svg { width: 100px; height: 50px; }
+    }
+
+    /* Mobile portrait: contain video instead of cover */
+    @media (max-width: 640px) and (orientation: portrait) {
+      .splash video {
+        object-fit: contain;
+        background: #000;
+      }
+    }
+
+    /* Mobile landscape: keep cover but limit height */
+    @media (max-width: 900px) and (orientation: landscape) {
+      .splash video {
+        object-fit: cover;
+        max-height: 100vh;
+      }
     }
   </style>
 </head>
