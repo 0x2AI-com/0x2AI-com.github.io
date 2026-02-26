@@ -8,6 +8,9 @@
   <meta name="theme-color" content="#05060a">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
+  <!-- Prefetch video while gate is showing -->
+  <link rel="preload" as="video" href="video/hero-loop.webm" type="video/webm">
+
   <!-- Open Graph -->
   <meta property="og:title" content="0x2AI Code — Multi-Agent Coding Engine">
   <meta property="og:description" content="AI agents that collaborate, cross-check, and remember. Self-hosted, privacy-first, built for serious engineering.">
@@ -44,24 +47,113 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ===== SPLASH OVERLAY ===== */
+    /* ===== CLICK GATE (infinity spinner) ===== */
+    .gate {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 10000;
+      background: #05060a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: opacity 0.8s ease;
+    }
+    .gate.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .gate-welcome {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #9aa0ff;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 40px;
+      opacity: 0;
+      animation: gateFadeIn 1.2s ease 0.3s forwards;
+    }
+    .gate-title {
+      font-family: 'Inter', sans-serif;
+      font-size: clamp(20px, 4vw, 32px);
+      font-weight: 300;
+      color: #f5f5f7;
+      text-align: center;
+      max-width: 600px;
+      line-height: 1.5;
+      margin-bottom: 12px;
+      opacity: 0;
+      animation: gateFadeIn 1.2s ease 0.6s forwards;
+    }
+    .gate-subtitle {
+      font-size: 15px;
+      color: #9ca0b0;
+      margin-bottom: 48px;
+      opacity: 0;
+      animation: gateFadeIn 1s ease 0.9s forwards;
+    }
+    .gate-cta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #666;
+      letter-spacing: 0.1em;
+      opacity: 0;
+      animation: gateFadeIn 1s ease 1.8s forwards, gatePulse 2.5s ease-in-out 2.8s infinite;
+    }
+
+    /* Infinity SVG animation */
+    .infinity-wrap {
+      margin-bottom: 48px;
+      opacity: 0;
+      animation: gateFadeIn 1s ease 0s forwards;
+    }
+    .infinity-path {
+      stroke: #9aa0ff;
+      stroke-width: 2;
+      fill: none;
+      stroke-dasharray: 600;
+      stroke-dashoffset: 600;
+      animation: drawInfinity 2.5s ease-in-out 0.2s forwards, glowInfinity 3s ease-in-out 2.7s infinite;
+      filter: drop-shadow(0 0 6px rgba(154, 160, 255, 0.3));
+    }
+
+    @keyframes drawInfinity {
+      to { stroke-dashoffset: 0; }
+    }
+    @keyframes glowInfinity {
+      0%, 100% { filter: drop-shadow(0 0 6px rgba(154, 160, 255, 0.3)); stroke: #9aa0ff; }
+      50% { filter: drop-shadow(0 0 18px rgba(154, 160, 255, 0.6)); stroke: #bfc3ff; }
+    }
+    @keyframes gateFadeIn {
+      to { opacity: 1; }
+    }
+    @keyframes gatePulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    /* ===== SPLASH OVERLAY (video) ===== */
     .splash {
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
       z-index: 9999;
       background: #000;
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
       transition: opacity 1.2s ease;
     }
-
+    .splash.active {
+      display: flex;
+    }
     .splash.fade-out {
       opacity: 0;
       pointer-events: none;
     }
-
     .splash video {
       width: 100%; height: 100%;
       object-fit: cover;
@@ -402,9 +494,22 @@
 
 <body>
 
+<!-- ===== CLICK GATE (infinity spinner) ===== -->
+<div class="gate" id="gate">
+  <div class="gate-welcome">Welcome to</div>
+  <div class="infinity-wrap">
+    <svg width="140" height="70" viewBox="0 0 140 70">
+      <path class="infinity-path" d="M70,35 C70,15 50,5 35,5 C15,5 5,20 5,35 C5,50 15,65 35,65 C50,65 70,55 70,35 C70,15 90,5 105,5 C125,5 135,20 135,35 C135,50 125,65 105,65 C90,65 70,55 70,35Z" />
+    </svg>
+  </div>
+  <div class="gate-title">The Answer to Life, the Universe,<br>and Everything — now with agents</div>
+  <div class="gate-subtitle">0x2AI Code</div>
+  <div class="gate-cta">[ click anywhere to continue ]</div>
+</div>
+
 <!-- ===== SPLASH VIDEO OVERLAY ===== -->
 <div class="splash" id="splash">
-  <video id="splashVideo" autoplay muted playsinline poster="hero-poster.jpg">
+  <video id="splashVideo" playsinline poster="hero-poster.jpg">
     <source src="video/hero-loop.webm" type="video/webm">
     <source src="video/hero-loop.mp4" type="video/mp4">
   </video>
@@ -550,31 +655,47 @@
 </footer>
 
 <script>
-  // ===== SPLASH VIDEO → FADE → REVEAL =====
+  // ===== GATE → VIDEO SPLASH → REVEAL =====
   (function() {
+    const gate = document.getElementById('gate');
     const splash = document.getElementById('splash');
     const video = document.getElementById('splashVideo');
 
-    // Try playing with sound; fall back to muted
-    const playPromise = video.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(() => {
-        video.muted = true;
-        video.play();
-      });
-    }
+    // Gate click: user interaction unlocks audio
+    gate.addEventListener('click', function() {
+      // Fade out the gate
+      gate.classList.add('fade-out');
 
-    // Fade out splash after 7 seconds (hold end frame ~3s longer)
-    setTimeout(() => {
-      splash.classList.add('fade-out');
-    }, 7000);
+      // Show and play video WITH sound (user has interacted)
+      splash.classList.add('active');
+      video.muted = false;
+      video.currentTime = 0;
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Fallback: if sound still blocked, play muted
+          video.muted = true;
+          video.play();
+        });
+      }
+
+      // Remove gate from DOM after fade
+      gate.addEventListener('transitionend', () => {
+        gate.style.display = 'none';
+      });
+
+      // Fade out video splash after 7 seconds
+      setTimeout(() => {
+        splash.classList.add('fade-out');
+      }, 7000);
+    });
 
     // Remove splash from DOM after fade completes
     splash.addEventListener('transitionend', () => {
       splash.style.display = 'none';
     });
 
-    // Also allow click to skip splash
+    // Also allow click to skip video splash
     splash.addEventListener('click', () => {
       splash.classList.add('fade-out');
     });
